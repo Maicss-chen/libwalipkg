@@ -7,7 +7,7 @@
 #include <packagekit-glib2/packagekit.h>
 #include <string>
 #include <vector>
-namespace PackageKit {
+namespace PackageKitMM {
     class PackageKit;
     //该类描述一个软件包
     class PkPackage {
@@ -16,10 +16,11 @@ namespace PackageKit {
         PkPackage();
         PkPackage(_PkPackage pkPackage);
         //API
-        gchar* get_package_id();
-        gchar* get_package_arch();
-        gchar* get_package_name();
+        std::string get_package_id();
+        std::string get_package_arch();
+        std::string get_package_name();
         bool is_installed();
+        bool operator==(PkPackage pkPackage);
     private:
         _PkPackage m_pkPackage;
     };

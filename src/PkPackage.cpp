@@ -4,26 +4,30 @@
 
 #include "PkPackage.h"
 #include <iostream>
-PackageKit::PkPackage::PkPackage() {
+PackageKitMM::PkPackage::PkPackage() {
 }
 
-PackageKit::PkPackage::PkPackage(_PkPackage pkPackage) {
+PackageKitMM::PkPackage::PkPackage(_PkPackage pkPackage) {
     m_pkPackage = pkPackage;
 }
 
-gchar* PackageKit::PkPackage::get_package_id() {
+std::string PackageKitMM::PkPackage::get_package_id() {
     return g_strdup (pk_package_get_id (&m_pkPackage));
 
 }
 
-gchar *PackageKit::PkPackage::get_package_arch() {
+std::string PackageKitMM::PkPackage::get_package_arch() {
     return g_strdup(pk_package_get_arch(&m_pkPackage));
 }
 
-bool PackageKit::PkPackage::is_installed() {
+bool PackageKitMM::PkPackage::is_installed() {
     return pk_package_get_info(&m_pkPackage) == PK_INFO_ENUM_INSTALLED;
 }
 
-gchar *PackageKit::PkPackage::get_package_name() {
+std::string PackageKitMM::PkPackage::get_package_name() {
     return g_strdup(pk_package_get_name(&m_pkPackage));
+}
+
+bool PackageKitMM::PkPackage::operator==(PkPackage pkPackage) {
+    return pkPackage.get_package_id() == get_package_id();
 }

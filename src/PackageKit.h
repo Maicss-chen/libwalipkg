@@ -10,7 +10,11 @@
 #include <packagekit-glib2/packagekit.h>
 #include <vector>
 
-namespace PackageKit{
+namespace PackageKitMM{
+    struct ContentsEntry{
+        std::string path;
+        std::string packageName;
+    };
     enum TaskType{
         TASK_NOTING_TO_DO,
         TASK_FIND_PACKAGE,
@@ -52,6 +56,7 @@ namespace PackageKit{
         //内部调用
         void (*_progressCallback)(PkProgress *progress,PkProgressType type,gpointer user_data){};
         gchar** to_package_id_list(std::vector<PkPackage> packages);
+        std::vector<ContentsEntry> parse_contents(const std::string &filename, std::vector<std::string> targets);
     };
 
 }
