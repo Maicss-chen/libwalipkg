@@ -6,7 +6,8 @@
 #include <iostream>
 #include <utility>
 #include <fstream>
-#include <sys/stat.h>
+
+#include "log.h"
 
 using namespace std;
 using namespace PackageKitMM;
@@ -35,12 +36,8 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
     std::vector<string> contents;
     const string cacheDir("/var/lib/apt/lists/");
 
-    if(files.empty()) return res;
-
-    struct stat s;
-    lstat(cacheDir.c_str(),&s);
-    if(!S_ISDIR(s.st_mode)){
-        cout<<"ERROR:";
+    if(files.empty()) {
+        log(LOG_FUNCTION_NAME "Files is empty!", WARRING);
         return res;
     }
 
@@ -48,7 +45,7 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
     DIR *dir;
     dir = opendir(cacheDir.c_str());
     if(dir==nullptr){
-        cout<<"ERROR:Can't open /var/lib/apt/lists\n";
+        log(LOG_FUNCTION_NAME "Can't open directory:" + cacheDir, ERROR);
         return res;
     }
     while ((filename = readdir(dir))!= nullptr){
@@ -59,6 +56,7 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
     for (const auto& content:contents) {
         string content_path = cacheDir+content;
         auto contentsEntryList=parse_contents(content_path,files);
+        if(contentsEntryList.empty()) continue;
         vector<string> names;
         for(auto entry:contentsEntryList){
             names.emplace_back(entry.packageName);
@@ -84,16 +82,23 @@ PackageKitMM::PackageKit::find_packages_based_on_names_sync(std::vector<std::str
     PkPackage *item;
     gchar **package_ids = nullptr;
     PkResults *results = nullptr;
+    GError *error = nullptr;
     std::vector<PkPackage> res;
-    if (names.empty())
+    if (names.empty()){
+        log(LOG_FUNCTION_NAME "Names is empty!", WARRING);
         return res;
+    }
 
     values = g_new0 (gchar*, names.size()+1);
     for (int i=0;i<names.size();i++) {
         values[i] = g_strdup(names.at(i).c_str());
     }
     values[names.size()] = nullptr;
-    results = pk_task_resolve_sync(m_task,PK_FILTER_ENUM_NONE,values,nullptr,_progressCallback,this,nullptr);
+    results = pk_task_resolve_sync(m_task,PK_FILTER_ENUM_NONE,values,nullptr,_progressCallback,this,&error);
+    if (error){
+        log(LOG_FUNCTION_NAME string(error->message), ERROR);
+        g_error_free (error);
+    }
     array = pk_results_get_package_array (results);
     package_ids = g_new0 (gchar *, array->len+1);
     for (int i = 0; i < array->len; i++) {
@@ -109,9 +114,14 @@ PackageKitMM::PackageKit::find_packages_based_on_names_sync(std::vector<std::str
 
 void PackageKitMM::PackageKit::install_packages(std::vector<PkPackage> packages) {
     gchar **package_ids = to_package_id_list(std::move(packages));
+    GError *error = nullptr;
     m_tasktype = TASK_INSTALL_PACKAGE;
     //安装所有软件包
-    pk_task_install_packages_sync(m_task, package_ids, nullptr, _progressCallback, this, nullptr);
+    pk_task_install_packages_sync(m_task, package_ids, nullptr, _progressCallback, this, &error);
+    if (error){
+        log(LOG_FUNCTION_NAME string(error->message), ERROR);
+        g_error_free (error);
+    }
     m_tasktype = TASK_NOTING_TO_DO;
 }
 
@@ -121,9 +131,14 @@ void PackageKitMM::PackageKit::setProgressCallback(ProgressCallback progressCall
 
 void PackageKitMM::PackageKit::remove_packages(std::vector<PkPackage> packages, bool allow_deps, bool autoremove) {
     gchar **package_ids = to_package_id_list(std::move(packages));
+    GError *error = nullptr;
     m_tasktype = TASK_REMOVE_PACKAGE;
     //卸载所有软件包
-    pk_task_remove_packages_sync(m_task, package_ids, allow_deps, autoremove, nullptr, _progressCallback, this, nullptr);
+    pk_task_remove_packages_sync(m_task, package_ids, allow_deps, autoremove, nullptr, _progressCallback, this, &error);
+    if (error){
+        log(LOG_FUNCTION_NAME string(error->message), ERROR);
+        g_error_free (error);
+    }
     m_tasktype = TASK_NOTING_TO_DO;
 }
 
@@ -140,7 +155,12 @@ gchar **PackageKitMM::PackageKit::to_package_id_list(std::vector<PkPackage> pack
 
 void PackageKitMM::PackageKit::refresh_cache(bool force) {
     m_tasktype = TASK_REFRESH_CACHE;
-    pk_task_refresh_cache_sync(m_task,force, nullptr,_progressCallback, this, nullptr);
+    GError *error = nullptr;
+    pk_task_refresh_cache_sync(m_task,force, nullptr,_progressCallback, this, &error);
+    if (error){
+        log(LOG_FUNCTION_NAME string(error->message), ERROR);
+        g_error_free (error);
+    }
     m_tasktype = TASK_NOTING_TO_DO;
 }
 
@@ -152,7 +172,7 @@ PackageKitMM::PackageKit::parse_contents(const std::string &filename, std::vecto
     file.open(filename, ios::in);
     if (!file)
     {
-        cout << "文件打开失败:"<<filename<<"\n";
+        log(LOG_FUNCTION_NAME "Can't open file:" + filename, ERROR);
         return res;
     }
     string line;
@@ -170,7 +190,6 @@ PackageKitMM::PackageKit::parse_contents(const std::string &filename, std::vecto
         for (it = targets.begin();it!=targets.end(); it++)
         {
             if(opt_left.length()<(*it).length()) continue;
-//            cout<<opt_left.substr(opt_left.length()-(*it).length(),(*it).length())<<"=="<<*it<<endl<<flush;
             if (opt_left.substr(opt_left.length()-(*it).length(),(*it).length())==*it)
             {
                 index = line.find_last_of('\t');
