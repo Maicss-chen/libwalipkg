@@ -34,11 +34,9 @@ namespace PackageKitMM{
         void refresh_cache(bool force=false);
 
         //根据文件查找包
-        std::vector<PkPackage> find_packages_based_on_files_sync(std::vector<std::string> files,
-                                                                 PkBitfield filters=PK_FILTER_ENUM_NONE);
+        std::vector<PkPackage> find_packages_based_on_files_sync(std::vector<std::string> files);
         //根据包名查找包
-        std::vector<PkPackage> find_packages_based_on_names_sync(std::vector<std::string> names,
-                                                                 PkBitfield filters=PK_FILTER_ENUM_NONE);
+        std::vector<PkPackage> find_packages_based_on_names_sync(std::vector<std::string> names);
         //安装软件包
         void install_packages(std::vector<PkPackage> packages);
 

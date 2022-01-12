@@ -28,7 +28,7 @@ bool PackageKitMM::PackageKit::init() {
 }
 
 std::vector<PackageKitMM::PkPackage>
-PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::string> files, PkBitfield filters) {
+PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::string> files) {
 
     m_tasktype = TASK_FIND_PACKAGE;
     std::vector<PackageKitMM::PkPackage> res;
@@ -77,7 +77,7 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
     return res;
 }
 std::vector<PackageKitMM::PkPackage>
-PackageKitMM::PackageKit::find_packages_based_on_names_sync(std::vector<std::string> names, PkBitfield filters) {
+PackageKitMM::PackageKit::find_packages_based_on_names_sync(std::vector<std::string> names) {
     m_tasktype = TASK_FIND_PACKAGE;
     gchar **values;
     GPtrArray *array = nullptr;
@@ -93,7 +93,7 @@ PackageKitMM::PackageKit::find_packages_based_on_names_sync(std::vector<std::str
         values[i] = g_strdup(names.at(i).c_str());
     }
     values[names.size()] = nullptr;
-    results = pk_task_resolve_sync(m_task,filters,values,nullptr,_progressCallback,this,nullptr);
+    results = pk_task_resolve_sync(m_task,PK_FILTER_ENUM_NONE,values,nullptr,_progressCallback,this,nullptr);
     array = pk_results_get_package_array (results);
     package_ids = g_new0 (gchar *, array->len+1);
     for (int i = 0; i < array->len; i++) {
