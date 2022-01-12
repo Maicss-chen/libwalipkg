@@ -3,34 +3,35 @@
 
 int main() {
 
-    PackageKit::PackageKit p;
+    PackageKitMM::PackageKit p;
 
     //设置进度更新时的回调函数
-    p.setProgressCallback([](int progress,PackageKit::TaskType type){
+    p.setProgressCallback([](int progress, PackageKitMM::TaskType type){
         std::string str;
-        if(type == PackageKit::TASK_FIND_PACKAGE)
+        if(type == PackageKitMM::TASK_FIND_PACKAGE)
             str = "查找进度：";
-        else if(type == PackageKit::TASK_INSTALL_PACKAGE)
+        else if(type == PackageKitMM::TASK_INSTALL_PACKAGE)
             str = "安装进度：";
-        else if(type == PackageKit::TASK_REMOVE_PACKAGE)
+        else if(type == PackageKitMM::TASK_REMOVE_PACKAGE)
             str = "卸载进度：";
-        else if(type == PackageKit::TASK_REFRESH_CACHE)
+        else if(type == PackageKitMM::TASK_REFRESH_CACHE)
             str = "更新缓存：";
         std::cout<<"\r"<<str<<progress<<"%"<< std::flush; //flush作用是及时输出（清楚缓冲区）
     });
 
+    //更新缓存
     p.refresh_cache(true);
 
     //生成一个要查找包的包名列表
     std::vector<std::string> values;
-    values.emplace_back("zsh");
+    values.emplace_back("QtWidgets/qpushbutton.h");
 
     //获取查找结果
     std::cout<<"\n正在搜索...\n";
-    auto pkg_list = p.find_packages_based_on_names_sync(values);
+    auto pkg_list = p.find_packages_based_on_files_sync(values);
 
     //筛选
-    std::vector<PackageKit::PkPackage> install_list;
+    std::vector<PackageKitMM::PkPackage> install_list;
     for(auto pkg : pkg_list){
         //将架构为x86_64的未安装的软件包加入安装列表
 //        if(strcmp(pkg.get_package_arch(),"x86_64") == 0 && pkg.is_installed()){
