@@ -47,7 +47,7 @@ int main() {
     } else{
         std::cout<<"\n将安装以下软件包：\n";
         for(auto pkg : install_list){
-            std::cout<<pkg.get_package_id()<<std::endl;
+            std::cout<<pkg.get_package_id()<<"\n\t"<<pkg.get_package_summary()<<std::endl;
         }
         std::cout<<"开始安装...\n";
         //安装所有软件包

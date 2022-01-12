@@ -29,5 +29,21 @@ std::string PackageKitMM::PkPackage::get_package_name() {
 }
 
 bool PackageKitMM::PkPackage::operator==(PkPackage pkPackage) {
-    return pkPackage.get_package_id() == get_package_id();
+    return pk_package_equal(&m_pkPackage,&pkPackage.m_pkPackage);
 }
+
+std::string PackageKitMM::PkPackage::get_package_summary() {
+    return g_strdup(pk_package_get_summary(&m_pkPackage));
+}
+
+std::string PackageKitMM::PkPackage::get_package_repositoryID() {
+    std::string data = pk_package_get_data(&m_pkPackage);
+    if(data=="local") return "";
+    int l = data.find_last_of(":");
+    if(l==std::string::npos){
+        return data;
+    } else{
+        return data.substr(l+1,data.length()-l);
+    }
+}
+

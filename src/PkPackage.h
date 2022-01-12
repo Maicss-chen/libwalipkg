@@ -19,6 +19,9 @@ namespace PackageKitMM {
         std::string get_package_id();
         std::string get_package_arch();
         std::string get_package_name();
+        std::string get_package_summary();
+        std::string get_package_repositoryID();
+
         bool is_installed();
         bool operator==(PkPackage pkPackage);
     private:
