@@ -1,6 +1,6 @@
 #include <iostream>
-#include <PackageKit.h>
-#include "log.h"
+#include "../src/PackageKit.h"
+#include "../src/log.h"
 int main() {
 
     log(LOG_FUNCTION_NAME "PackageKitmm is running");

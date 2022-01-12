@@ -1,5 +1,4 @@
-
-set(LIBRARY_NAME packagekit++)
+set(LIBRARY_NAME packagekitmm)
 set(CMAKE_CXX_STANDARD 14)
 
 set(LIB_SOURCE
