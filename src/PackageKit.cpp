@@ -20,7 +20,6 @@ PackageKitMM::PackageKit::~PackageKit() {
 
 bool PackageKitMM::PackageKit::init() {
     m_task = pk_task_new();
-    m_progressCallback = nullptr;
     _progressCallback = [](PkProgress *progress, PkProgressType type, gpointer user_data) {
         if(user_data != nullptr)
             ((PackageKit*)user_data)->m_progressCallback(pk_progress_get_percentage(progress),((PackageKit*)user_data)->m_tasktype);
@@ -53,9 +52,12 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
         if(name.find("Contents")!=string::npos)
             contents.emplace_back(filename->d_name);
     }
+    if(contents.empty()){
+        log(LOG_FUNCTION_NAME "Not find Contents file, Maybe you need to run \"apt update\".");
+        return res;
+    }
     for (const auto& content:contents) {
-        string content_path = cacheDir+content;
-        auto contentsEntryList=parse_contents(content_path,files);
+        auto contentsEntryList=parse_contents(cacheDir+content,files);
         if(contentsEntryList.empty()) continue;
         vector<string> names;
         for(auto entry:contentsEntryList){
