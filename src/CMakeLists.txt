@@ -11,6 +11,7 @@ if(NOT ${APT_RES})
     message("Find apt in your system, We will Build for Debian.")
     add_definitions(-D_APT)
 endif()
+
 set(LIB_SOURCE
         PackageKit.h
         PkPackage.h

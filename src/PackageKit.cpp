@@ -12,7 +12,7 @@
 using namespace std;
 using namespace PackageKitMM;
 PackageKitMM::PackageKit::PackageKit() {
-    log("Add a PackageKit object");
+    log("Create a PackageKit object");
     init();
 }
 PackageKitMM::PackageKit::~PackageKit() {
@@ -199,6 +199,27 @@ void PackageKitMM::PackageKit::refresh_cache(bool force) {
     }
     m_tasktype = TASK_NOTING_TO_DO;
 }
+
+void PackageKit::install_local_packages(std::vector<std::string> files) {
+    m_tasktype = TASK_INSTALL_PACKAGE;
+    GError *error = nullptr;
+    gchar **files_array = g_new0(gchar*,files.size()+1);
+    for (int i = 0; i < files.size(); ++i) {
+        filesystem::path file(files.at(i));
+        if(!filesystem::exists(file)){
+            log(LOG_FUNCTION_NAME "Not find "+files.at(i),ERROR);
+        }
+        files_array[i] = g_strdup(files.at(i).c_str());
+    }
+    files_array[files.size()]= nullptr;
+    pk_task_install_files_sync(m_task,files_array, nullptr,_progressCallback,this,&error);
+    if (error){
+        log(LOG_FUNCTION_NAME string(error->message), ERROR);
+        g_error_free (error);
+    }
+    m_tasktype = TASK_NOTING_TO_DO;
+}
+
 #ifdef _APT
 std::vector<PackageKitMM::ContentsEntry>
 PackageKitMM::PackageKit::parse_contents(const std::string &filename, std::vector<std::string> targets) {

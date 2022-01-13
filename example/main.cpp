@@ -3,8 +3,6 @@
 #include "../src/log.h"
 int main() {
 
-    log(LOG_FUNCTION_NAME "PackageKitmm is running");
-
     PackageKitMM::PackageKit p;
 
     //设置进度更新时的回调函数
@@ -21,6 +19,10 @@ int main() {
         std::cout<<"\r"<<str<<progress<<"%"<< std::flush; //flush作用是及时输出（清楚缓冲区）
     });
 
+    std::vector<std::string> files;
+    files.emplace_back("/home/maicss/下载/utools_2.5.2_amd64.deb");
+    p.install_local_packages(files);
+    return 0;
     //更新缓存
     p.refresh_cache(false);
 

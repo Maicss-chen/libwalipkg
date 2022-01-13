@@ -39,7 +39,8 @@ namespace PackageKitMM{
         std::vector<PkPackage> find_packages_based_on_names_sync(std::vector<std::string> names);
         //安装软件包
         void install_packages(std::vector<PkPackage> packages);
-
+        //安装本地软件包
+        void install_local_packages(std::vector<std::string> files);
         //卸载软件包
         void remove_packages(std::vector<PkPackage> packages,bool allow_deps = true,bool autoremove = false);
 
