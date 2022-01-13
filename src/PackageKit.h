@@ -53,8 +53,8 @@ namespace PackageKitMM{
 
         //内部调用
         void (*_progressCallback)(PkProgress *progress,PkProgressType type,gpointer user_data){};
-        gchar** to_package_id_list(std::vector<PkPackage> packages);
-        std::vector<ContentsEntry> parse_contents(const std::string &filename, std::vector<std::string> targets);
+        static gchar** to_package_id_list(std::vector<PkPackage> packages);
+        static std::vector<ContentsEntry> parse_contents(const std::string &filename, std::vector<std::string> targets);
     };
 
 }

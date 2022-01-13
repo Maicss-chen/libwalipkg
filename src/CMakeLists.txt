@@ -1,5 +1,5 @@
 set(LIBRARY_NAME packagekitmm)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 set(LIB_SOURCE
         PackageKit.h

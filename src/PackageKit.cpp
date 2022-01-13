@@ -4,8 +4,8 @@
 
 #include "PackageKit.h"
 #include <iostream>
-#include <utility>
 #include <fstream>
+#include <filesystem>
 
 #include "log.h"
 
@@ -33,31 +33,35 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
     m_tasktype = TASK_FIND_PACKAGE;
     std::vector<PackageKitMM::PkPackage> res;
     std::vector<string> contents;
-    const string cacheDir("/var/lib/apt/lists/");
+    filesystem::path cacheDir("/var/lib/apt/lists/");
 
     if(files.empty()) {
         log(LOG_FUNCTION_NAME "Files is empty!", WARRING);
         return res;
     }
 
-    struct dirent *filename;
-    DIR *dir;
-    dir = opendir(cacheDir.c_str());
-    if(dir==nullptr){
-        log(LOG_FUNCTION_NAME "Can't open directory:" + cacheDir, ERROR);
+    filesystem::directory_entry entry(cacheDir);
+    if(!entry.exists()){
+        log("Can't find "+cacheDir.string());
         return res;
     }
-    while ((filename = readdir(dir))!= nullptr){
-        string name = filename->d_name;
-        if(name.find("Contents")!=string::npos)
-            contents.emplace_back(filename->d_name);
+
+    if(entry.status().type() != filesystem::file_type::directory){
+        log( cacheDir.string()+" is not a directory.");
+        return res;
+    }
+
+    filesystem::directory_iterator iterator(cacheDir);
+    for(auto& it:iterator){
+        if(it.path().filename().string().find("Contents")!=string::npos)
+            contents.emplace_back(it.path().filename().string());
     }
     if(contents.empty()){
         log(LOG_FUNCTION_NAME "Not find Contents file, Maybe you need to run \"apt update\".");
         return res;
     }
     for (const auto& content:contents) {
-        auto contentsEntryList=parse_contents(cacheDir+content,files);
+        auto contentsEntryList=parse_contents(cacheDir.string()+content,files);
         if(contentsEntryList.empty()) continue;
         vector<string> names;
         for(auto entry:contentsEntryList){
