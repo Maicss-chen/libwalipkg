@@ -33,7 +33,7 @@ namespace PackageKitMM{
         //更新apt缓存文件
         void refresh_cache(bool force=false);
 
-        //根据文件查找包
+        // 根据文件查找包。在Debian下，该函数能支持的参数有相对路径、绝对路径、文件名。但其他发行版下，主要取决于PackageKit对于此功能的实现。
         std::vector<PkPackage> find_packages_based_on_files_sync(std::vector<std::string> files);
         //根据包名查找包
         std::vector<PkPackage> find_packages_based_on_names_sync(std::vector<std::string> names);

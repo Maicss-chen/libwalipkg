@@ -25,3 +25,12 @@ pkg_check_modules(PackageKit REQUIRED IMPORTED_TARGET packagekit-glib2)
 include_directories(${PackageKit_INCLUDE_DIRS})
 ```
 最后将`packagekit-glib2`库连接到您的程序。
+
+# 注意事项
+## apt包管理器
+当使用find_packages_based_on_files_sync()时，需要首先加载配置文件：`conf/apt/50packagekitmm.conf`。
+将该文件存放至：`/etc/apt/apt.conf.d/`目录下。执行以下命令：
+```bash
+systemctl restart packagekit
+```
+> 该操作会让apt在更新缓存时于/var/lib/apt/lists文件夹下下载Contents文件并解压，该文件用于存储仓库的索引，通常这将占用1~2G的空间，该空间并不会随时间增长。

@@ -22,7 +22,7 @@ int main() {
     });
 
     //更新缓存
-    p.refresh_cache(true);
+    p.refresh_cache(false);
 
     //生成一个要查找包的包名列表
     std::vector<std::string> values;

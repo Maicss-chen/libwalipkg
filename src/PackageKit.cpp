@@ -53,7 +53,8 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
 
     filesystem::directory_iterator iterator(cacheDir);
     for(auto& it:iterator){
-        if(it.path().filename().string().find("Contents")!=string::npos)
+        if(it.path().filename().string().find("Contents")!=string::npos &&
+            it.path().filename().string().find(".lz4")==string::npos)
             contents.emplace_back(it.path().filename().string());
     }
     if(contents.empty()){
