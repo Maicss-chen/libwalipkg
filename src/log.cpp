@@ -6,6 +6,11 @@
 #include <ctime>
 #include <iomanip>
 void log(const std::string& content, LogType type) {
+#ifndef _DEBUG
+    if(type == NORMAL)
+        return;
+#endif
+
     time_t tt;
     time(&tt);
     tt=tt+8*3600;

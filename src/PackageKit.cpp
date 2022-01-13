@@ -12,6 +12,7 @@
 using namespace std;
 using namespace PackageKitMM;
 PackageKitMM::PackageKit::PackageKit() {
+    log("Add a PackageKit object");
     init();
 }
 PackageKitMM::PackageKit::~PackageKit() {
@@ -26,10 +27,9 @@ bool PackageKitMM::PackageKit::init() {
     };
     return m_task != nullptr;
 }
-
 std::vector<PackageKitMM::PkPackage>
 PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::string> files) {
-
+#ifdef _APT
     m_tasktype = TASK_FIND_PACKAGE;
     std::vector<PackageKitMM::PkPackage> res;
     std::vector<string> contents;
@@ -79,7 +79,36 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
     }
     m_tasktype = TASK_NOTING_TO_DO;
     return res;
+#else
+    gchar **values;
+    GPtrArray *array = nullptr;
+    PkPackage *item;
+    gchar **package_ids = nullptr;
+    PkResults *results = nullptr;
+
+    values = g_new0 (gchar*, files.size()+1);
+    for (int i=0;i<files.size();i++) {
+        values[i] = g_strdup(files.at(i).c_str());
+    }
+    values[files.size()] = nullptr;
+    m_tasktype = TASK_FIND_PACKAGE;
+    results = pk_task_search_files_sync(m_task, PK_FILTER_ENUM_NONE,values,nullptr,_progressCallback,this,nullptr);
+    array = pk_results_get_package_array (results);
+    package_ids = g_new0 (gchar *, array->len+1);
+    std::vector<PkPackage> res;
+    for (int i = 0; i < array->len; i++) {
+        item = (PkPackage*)g_ptr_array_index(array, i);
+        package_ids[i] = g_strdup (pk_package_get_id ((_PkPackage*)item));
+        res.emplace_back(*item);
+    }
+    g_strfreev(values);
+    g_strfreev(package_ids);
+    m_tasktype = TASK_NOTING_TO_DO;
+    return res;
+#endif
 }
+
+
 std::vector<PackageKitMM::PkPackage>
 PackageKitMM::PackageKit::find_packages_based_on_names_sync(std::vector<std::string> names) {
     m_tasktype = TASK_FIND_PACKAGE;
@@ -169,7 +198,7 @@ void PackageKitMM::PackageKit::refresh_cache(bool force) {
     }
     m_tasktype = TASK_NOTING_TO_DO;
 }
-
+#ifdef _APT
 std::vector<PackageKitMM::ContentsEntry>
 PackageKitMM::PackageKit::parse_contents(const std::string &filename, std::vector<std::string> targets) {
 
@@ -224,5 +253,5 @@ PackageKitMM::PackageKit::parse_contents(const std::string &filename, std::vecto
     file.close();
     return res;
 }
-
+#endif
 

@@ -26,7 +26,7 @@ int main() {
 
     //生成一个要查找包的包名列表
     std::vector<std::string> values;
-    values.emplace_back("QtWidgets/qpushbutton.h");
+    values.emplace_back("qpushbutton.h");
 
     //获取查找结果
     std::cout<<"\n正在搜索...\n";
