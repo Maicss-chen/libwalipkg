@@ -47,10 +47,14 @@ namespace PackageKitMM{
         //设置进度更新时的回调函数
         void setProgressCallback(ProgressCallback progressCallback);
 
+        //返回上一操作中的错误结果
+        std::string error();
+
     private:
         PkTask *m_task{};
         ProgressCallback m_progressCallback{};
         TaskType m_tasktype;  //用于记录目前正在执行的任务类型
+        std::string m_error;
 
         //内部调用
         void (*_progressCallback)(PkProgress *progress,PkProgressType type,gpointer user_data){};

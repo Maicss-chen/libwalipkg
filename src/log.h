@@ -11,7 +11,7 @@ typedef enum {
     WARRING,
     ERROR,
 } LogType;
-void log(const std::string& content,LogType type=NORMAL);
+std::string log(const std::string& content,LogType type=NORMAL);
 //void log(char* content,LogType type=NORMAL);
 
 #endif //PKGKIT_LOG_H

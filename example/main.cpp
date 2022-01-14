@@ -19,12 +19,12 @@ int main() {
         std::cout<<"\r"<<str<<progress<<"%"<< std::flush; //flush作用是及时输出（清楚缓冲区）
     });
 
-    std::vector<std::string> files;
-    files.emplace_back("/home/maicss/下载/utools_2.5.2_amd64.deb");
-    p.install_local_packages(files);
-    return 0;
     //更新缓存
     p.refresh_cache(false);
+
+    if(!p.error().empty()){
+        return 0;
+    }
 
     //生成一个要查找包的包名列表
     std::vector<std::string> values;

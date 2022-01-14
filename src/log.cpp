@@ -5,10 +5,10 @@
 #include <iostream>
 #include <ctime>
 #include <iomanip>
-void log(const std::string& content, LogType type) {
+std::string log(const std::string& content, LogType type) {
 #ifndef _DEBUG
     if(type == NORMAL)
-        return;
+        return content;
 #endif
 
     time_t tt;
@@ -38,4 +38,5 @@ void log(const std::string& content, LogType type) {
              <<t<<": "
              <<content
              <<std::endl;
+    return content;
 }

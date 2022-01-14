@@ -29,6 +29,7 @@ bool PackageKitMM::PackageKit::init() {
 }
 std::vector<PackageKitMM::PkPackage>
 PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::string> files) {
+    m_error = "";
 #ifdef _APT
     m_tasktype = TASK_FIND_PACKAGE;
     std::vector<PackageKitMM::PkPackage> res;
@@ -42,12 +43,12 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
 
     filesystem::directory_entry entry(cacheDir);
     if(!entry.exists()){
-        log("Can't find "+cacheDir.string());
+        m_error = log("Can't find "+cacheDir.string());
         return res;
     }
 
     if(entry.status().type() != filesystem::file_type::directory){
-        log( cacheDir.string()+" is not a directory.");
+        m_error = log( cacheDir.string()+" is not a directory.");
         return res;
     }
 
@@ -58,7 +59,7 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
             contents.emplace_back(it.path().filename().string());
     }
     if(contents.empty()){
-        log(LOG_FUNCTION_NAME "Not find Contents file, Maybe you need to run \"apt update\".");
+        m_error = log(LOG_FUNCTION_NAME "Not find Contents file, Maybe you need to run \"apt update\".");
         return res;
     }
     for (const auto& content:contents) {
@@ -86,6 +87,7 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
     PkPackage *item;
     gchar **package_ids = nullptr;
     PkResults *results = nullptr;
+    GError *error = nullptr;
 
     values = g_new0 (gchar*, files.size()+1);
     for (int i=0;i<files.size();i++) {
@@ -93,7 +95,11 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
     }
     values[files.size()] = nullptr;
     m_tasktype = TASK_FIND_PACKAGE;
-    results = pk_task_search_files_sync(m_task, PK_FILTER_ENUM_NONE,values,nullptr,_progressCallback,this,nullptr);
+    results = pk_task_search_files_sync(m_task, PK_FILTER_ENUM_NONE,values,nullptr,_progressCallback,this,&error);
+    if (error){
+        m_error = log(LOG_FUNCTION_NAME string(error->message), ERROR);
+        g_error_free (error);
+    }
     array = pk_results_get_package_array (results);
     package_ids = g_new0 (gchar *, array->len+1);
     std::vector<PkPackage> res;
@@ -112,6 +118,7 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
 
 std::vector<PackageKitMM::PkPackage>
 PackageKitMM::PackageKit::find_packages_based_on_names_sync(std::vector<std::string> names) {
+    m_error = "";
     m_tasktype = TASK_FIND_PACKAGE;
     gchar **values;
     GPtrArray *array = nullptr;
@@ -121,7 +128,7 @@ PackageKitMM::PackageKit::find_packages_based_on_names_sync(std::vector<std::str
     GError *error = nullptr;
     std::vector<PkPackage> res;
     if (names.empty()){
-        log(LOG_FUNCTION_NAME "Names is empty!", WARRING);
+        m_error = log(LOG_FUNCTION_NAME "Names is empty!", WARRING);
         return res;
     }
 
@@ -132,7 +139,7 @@ PackageKitMM::PackageKit::find_packages_based_on_names_sync(std::vector<std::str
     values[names.size()] = nullptr;
     results = pk_task_resolve_sync(m_task,PK_FILTER_ENUM_NONE,values,nullptr,_progressCallback,this,&error);
     if (error){
-        log(LOG_FUNCTION_NAME string(error->message), ERROR);
+        m_error = log(LOG_FUNCTION_NAME string(error->message), ERROR);
         g_error_free (error);
     }
     array = pk_results_get_package_array (results);
@@ -149,13 +156,14 @@ PackageKitMM::PackageKit::find_packages_based_on_names_sync(std::vector<std::str
 }
 
 void PackageKitMM::PackageKit::install_packages(std::vector<PkPackage> packages) {
+    m_error = "";
     gchar **package_ids = to_package_id_list(std::move(packages));
     GError *error = nullptr;
     m_tasktype = TASK_INSTALL_PACKAGE;
     //安装所有软件包
     pk_task_install_packages_sync(m_task, package_ids, nullptr, _progressCallback, this, &error);
     if (error){
-        log(LOG_FUNCTION_NAME string(error->message), ERROR);
+        m_error = log(LOG_FUNCTION_NAME string(error->message), ERROR);
         g_error_free (error);
     }
     m_tasktype = TASK_NOTING_TO_DO;
@@ -166,13 +174,14 @@ void PackageKitMM::PackageKit::setProgressCallback(ProgressCallback progressCall
 }
 
 void PackageKitMM::PackageKit::remove_packages(std::vector<PkPackage> packages, bool allow_deps, bool autoremove) {
+    m_error = "";
     gchar **package_ids = to_package_id_list(std::move(packages));
     GError *error = nullptr;
     m_tasktype = TASK_REMOVE_PACKAGE;
     //卸载所有软件包
     pk_task_remove_packages_sync(m_task, package_ids, allow_deps, autoremove, nullptr, _progressCallback, this, &error);
     if (error){
-        log(LOG_FUNCTION_NAME string(error->message), ERROR);
+        m_error = log(LOG_FUNCTION_NAME string(error->message), ERROR);
         g_error_free (error);
     }
     m_tasktype = TASK_NOTING_TO_DO;
@@ -190,34 +199,40 @@ gchar **PackageKitMM::PackageKit::to_package_id_list(std::vector<PkPackage> pack
 }
 
 void PackageKitMM::PackageKit::refresh_cache(bool force) {
+    m_error = "";
     m_tasktype = TASK_REFRESH_CACHE;
     GError *error = nullptr;
     pk_task_refresh_cache_sync(m_task,force, nullptr,_progressCallback, this, &error);
     if (error){
-        log(LOG_FUNCTION_NAME string(error->message), ERROR);
+        m_error = log(LOG_FUNCTION_NAME string(error->message), ERROR);
         g_error_free (error);
     }
     m_tasktype = TASK_NOTING_TO_DO;
 }
 
 void PackageKit::install_local_packages(std::vector<std::string> files) {
+    m_error = "";
     m_tasktype = TASK_INSTALL_PACKAGE;
     GError *error = nullptr;
     gchar **files_array = g_new0(gchar*,files.size()+1);
     for (int i = 0; i < files.size(); ++i) {
         filesystem::path file(files.at(i));
         if(!filesystem::exists(file)){
-            log(LOG_FUNCTION_NAME "Not find "+files.at(i),ERROR);
+            m_error = log(LOG_FUNCTION_NAME "Not find "+files.at(i),ERROR);
         }
         files_array[i] = g_strdup(files.at(i).c_str());
     }
     files_array[files.size()]= nullptr;
     pk_task_install_files_sync(m_task,files_array, nullptr,_progressCallback,this,&error);
     if (error){
-        log(LOG_FUNCTION_NAME string(error->message), ERROR);
+        m_error = log(LOG_FUNCTION_NAME string(error->message), ERROR);
         g_error_free (error);
     }
     m_tasktype = TASK_NOTING_TO_DO;
+}
+
+std::string PackageKit::error() {
+    return m_error;
 }
 
 #ifdef _APT
