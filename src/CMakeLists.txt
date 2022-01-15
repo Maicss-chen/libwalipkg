@@ -18,7 +18,7 @@ set(LIB_SOURCE
         PackageKit.cpp
         PkPackage.cpp
         log.h
-        log.cpp)
+        log.cpp PkRepo.cpp PkRepo.h)
 
 add_library(${LIBRARY_NAME} ${LIB_SOURCE})
 

@@ -6,6 +6,7 @@
 #define TEST_PACKAGEKIT_H
 
 #include "PkPackage.h"
+#include "PkRepo.h"
 
 #include <packagekit-glib2/packagekit.h>
 #include <vector>
@@ -34,15 +35,17 @@ namespace PackageKitMM{
         void refresh_cache(bool force=false);
 
         // 根据文件查找包。在Debian下，该函数能支持的参数有相对路径、绝对路径、文件名。但其他发行版下，主要取决于PackageKit对于此功能的实现。
-        std::vector<PkPackage> find_packages_based_on_files_sync(std::vector<std::string> files);
+        std::vector<PkPackage> find_packages_based_on_files(std::vector<std::string> files);
         //根据包名查找包
-        std::vector<PkPackage> find_packages_based_on_names_sync(std::vector<std::string> names);
+        std::vector<PkPackage> find_packages_based_on_names(std::vector<std::string> names);
         //安装软件包
         void install_packages(std::vector<PkPackage> packages);
         //安装本地软件包
         void install_local_packages(std::vector<std::string> files);
         //卸载软件包
         void remove_packages(std::vector<PkPackage> packages,bool allow_deps = true,bool autoremove = false);
+        //获取仓库列表
+        std::vector<PkRepo> get_repo_list();
 
         //设置进度更新时的回调函数
         void setProgressCallback(ProgressCallback progressCallback);

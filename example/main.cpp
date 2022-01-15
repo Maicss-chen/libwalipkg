@@ -19,6 +19,11 @@ int main() {
         std::cout<<"\r"<<str<<progress<<"%"<< std::flush; //flush作用是及时输出（清楚缓冲区）
     });
 
+    auto repos = p.get_repo_list();
+    for(auto repo : repos){
+        log(repo.get_repo_id());
+    }
+
     //更新缓存
     p.refresh_cache(false);
 
@@ -28,11 +33,11 @@ int main() {
 
     //生成一个要查找包的包名列表
     std::vector<std::string> values;
-    values.emplace_back("qpushbutton.h");
+    values.emplace_back("libGL.so.1");
 
     //获取查找结果
     std::cout<<"\n正在搜索...\n";
-    auto pkg_list = p.find_packages_based_on_files_sync(values);
+    auto pkg_list = p.find_packages_based_on_files(values);
 
     //筛选
     std::vector<PackageKitMM::PkPackage> install_list;

@@ -28,7 +28,7 @@ bool PackageKitMM::PackageKit::init() {
     return m_task != nullptr;
 }
 std::vector<PackageKitMM::PkPackage>
-PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::string> files) {
+PackageKitMM::PackageKit::find_packages_based_on_files(std::vector<std::string> files) {
     m_error = "";
 #ifdef _APT
     m_tasktype = TASK_FIND_PACKAGE;
@@ -66,10 +66,10 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
         auto contentsEntryList=parse_contents(cacheDir.string()+content,files);
         if(contentsEntryList.empty()) continue;
         vector<string> names;
-        for(auto entry:contentsEntryList){
-            names.emplace_back(entry.packageName);
+        for(const auto& _entry:contentsEntryList){
+            names.emplace_back(_entry.packageName);
         }
-        auto r = find_packages_based_on_names_sync(names);
+        auto r = find_packages_based_on_names(names);
         for(auto a : r){
             bool isHere = false;
             for (auto b:res) {
@@ -117,7 +117,7 @@ PackageKitMM::PackageKit::find_packages_based_on_files_sync(std::vector<std::str
 
 
 std::vector<PackageKitMM::PkPackage>
-PackageKitMM::PackageKit::find_packages_based_on_names_sync(std::vector<std::string> names) {
+PackageKitMM::PackageKit::find_packages_based_on_names(std::vector<std::string> names) {
     m_error = "";
     m_tasktype = TASK_FIND_PACKAGE;
     gchar **values;
@@ -233,6 +233,19 @@ void PackageKit::install_local_packages(std::vector<std::string> files) {
 
 std::string PackageKit::error() {
     return m_error;
+}
+
+std::vector<PkRepo> PackageKit::get_repo_list() {
+    vector<PkRepo> res;
+    GError *error = nullptr;
+    auto _res = pk_task_get_repo_list_sync(m_task, PK_FILTER_ENUM_NONE, nullptr, nullptr, nullptr,&error);
+    auto array = pk_results_get_repo_detail_array (_res);
+    for (int i = 0; i < array->len; i++) {
+        PkRepo repo{};
+        repo.m_repo = *(_PkRepoDetail*)g_ptr_array_index(array, i);
+        res.emplace_back(repo);
+    }
+    return res;
 }
 
 #ifdef _APT
