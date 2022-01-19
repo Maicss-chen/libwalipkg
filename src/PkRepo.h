@@ -14,6 +14,7 @@ namespace PackageKitMM{
         std::string get_repo_id();
         std::string get_repo_description();
         bool get_repo_enabled();
+        void set_repo_enabled(bool enable);
     private:
         _PkRepoDetail m_repo;
     };

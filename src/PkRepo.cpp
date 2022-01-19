@@ -3,6 +3,9 @@
 //
 
 #include "PkRepo.h"
+#include "log.h"
+
+#include <string>
 
 std::string PackageKitMM::PkRepo::get_repo_id() {
     return pk_repo_detail_get_id(&m_repo);
@@ -14,4 +17,15 @@ std::string PackageKitMM::PkRepo::get_repo_description() {
 
 bool PackageKitMM::PkRepo::get_repo_enabled() {
     return pk_repo_detail_get_enabled(&m_repo);
+}
+
+void PackageKitMM::PkRepo::set_repo_enabled(bool enable) {
+    PkTask *pkTask = pk_task_new();
+    GError *error;
+    gchar *id = g_strdup(pk_repo_detail_get_id(&m_repo));
+    pk_task_repo_enable_sync(pkTask,id,enable, nullptr, nullptr, nullptr, &error);
+    if (error){
+        log(LOG_FUNCTION_NAME std::string(error->message), ERROR);
+        g_error_free (error);
+    }
 }
