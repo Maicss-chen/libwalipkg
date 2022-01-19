@@ -17,7 +17,6 @@ std::vector<std::string> PackageKitMM::PkSourcePackage::get_package_name_list() 
     std::vector<std::string> res;
     for(const std::string& pkg : m_package_list){
         res.emplace_back(pkg.substr(0,pkg.find(' ')));
-//        log(pkg);
     }
     return res;
 }

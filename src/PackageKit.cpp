@@ -250,7 +250,7 @@ std::vector<PkRepo> PackageKit::get_repo_list() {
     }
     return res;
 }
-
+#ifdef _APT
 std::vector<PkSourcePackage> PackageKit::get_source_package_info(std::vector<std::string> packages) {
     vector<PkSourcePackage> res;
     std::vector<string> sources;
@@ -324,6 +324,7 @@ std::vector<PkSourcePackage> PackageKit::get_source_package_info(std::vector<std
     }
     return res;
 }
+#endif
 
 #ifdef _APT
 std::vector<PackageKitMM::ContentsEntry>
