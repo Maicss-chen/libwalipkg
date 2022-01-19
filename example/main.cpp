@@ -7,6 +7,20 @@ int main() {
 
     PackageKitMM::PackageKit p;
 
+    std::vector<std::string> v;
+    v.emplace_back("zip");
+    v.emplace_back("zfs-linux");
+    auto res = p.get_source_package_info(v);
+
+    for(auto item : res){
+        std::cout<<item.get_name()<<" "<<item.get_version()<<std::endl;
+        auto a = item.get_package_name_list();
+        for(auto package : a){
+            std::cout<<"\t"<<package<<std::endl;
+        }
+    }
+
+    return 0;
     //设置进度更新时的回调函数
     p.setProgressCallback([](PackageKitMM::PkProgress progress, PackageKitMM::TaskType type){
         std::string str;

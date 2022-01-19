@@ -22,7 +22,9 @@ set(LIB_SOURCE
         PkRepo.cpp
         PkRepo.h
         PkProgress.cpp
-        PkProgress.h)
+        PkProgress.h
+        PkSourcePackage.cpp
+        PkSourcePackage.h)
 
 add_library(${LIBRARY_NAME} ${LIB_SOURCE})
 

@@ -251,6 +251,80 @@ std::vector<PkRepo> PackageKit::get_repo_list() {
     return res;
 }
 
+std::vector<PkSourcePackage> PackageKit::get_source_package_info(std::vector<std::string> packages) {
+    vector<PkSourcePackage> res;
+    std::vector<string> sources;
+    filesystem::path cacheDir("/var/lib/apt/lists/");
+    filesystem::directory_entry entry(cacheDir);
+    if(!entry.exists()){
+        m_error = log("Can't find "+cacheDir.string());
+        return res;
+    }
+
+    if(entry.status().type() != filesystem::file_type::directory){
+        m_error = log( cacheDir.string()+" is not a directory.");
+        return res;
+    }
+
+    filesystem::directory_iterator iterator(cacheDir);
+    for(auto& it:iterator){
+        if(it.path().filename().string().find("_Sources")!=string::npos)
+            sources.emplace_back(it.path().filename().string());
+    }
+    if(sources.empty()){
+        m_error = log(LOG_FUNCTION_NAME "Not find Sources file, Maybe you need to run \"apt update\" or open src repo.");
+        return res;
+    }
+    for(auto source : sources){
+        fstream file;
+        file.open(cacheDir.string()+source, ios::in);
+        if (!file)
+        {
+            continue;
+        }
+        string line;
+        PkSourcePackage sourcesEntry;
+        bool thisOne = false;
+        bool readPackageList = false;
+        while (getline(file, line))
+        {
+            if(line.empty()){
+                if(thisOne == true){
+                    res.emplace_back(sourcesEntry);
+                }
+                thisOne = false;
+                readPackageList = false;
+                sourcesEntry.m_package_list.clear();
+                continue;
+            }
+            if(line.substr(0,8)=="Package:"){
+                sourcesEntry.m_name = line.substr(9,line.length()-9);
+                for (int i = 0; i < packages.size(); ++i) {
+                    if(packages.at(i) == sourcesEntry.m_name){
+                        thisOne = true;
+                        continue;
+                    }
+                }
+            }
+            if(thisOne && line.substr(0, 8) == "Version:"){
+                sourcesEntry.m_version = line.substr(9,line.length()-9);
+            }
+            if(thisOne && line.substr(0, 13) == "Package-List:"){
+                readPackageList = true;
+                continue;
+            }
+            if(line.find(':') != string::npos){
+                readPackageList = false;
+            }
+            if (thisOne && readPackageList) {
+                sourcesEntry.m_package_list.emplace_back(line.substr(1,line.length()-1));
+            }
+        }
+        file.close();
+    }
+    return res;
+}
+
 #ifdef _APT
 std::vector<PackageKitMM::ContentsEntry>
 PackageKitMM::PackageKit::parse_contents(const std::string &filename, std::vector<std::string> targets) {
