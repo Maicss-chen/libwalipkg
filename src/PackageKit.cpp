@@ -21,9 +21,12 @@ PackageKitMM::PackageKit::~PackageKit() {
 
 bool PackageKitMM::PackageKit::init() {
     m_task = pk_task_new();
-    _progressCallback = [](PkProgress *progress, PkProgressType type, gpointer user_data) {
-        if(user_data != nullptr)
-            ((PackageKit*)user_data)->m_progressCallback(pk_progress_get_percentage(progress),((PackageKit*)user_data)->m_tasktype);
+    _progressCallback = [](_PkProgress *progress, PkProgressType type, gpointer user_data) {
+        if(user_data != nullptr) {
+            PkProgress progress1{};
+            progress1.m_progress = *progress;
+            ((PackageKit *) user_data)->m_progressCallback(progress1,((PackageKit *) user_data)->m_tasktype);
+        }
     };
     return m_task != nullptr;
 }

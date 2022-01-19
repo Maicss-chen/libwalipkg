@@ -7,6 +7,7 @@
 
 #include "PkPackage.h"
 #include "PkRepo.h"
+#include "PkProgress.h"
 
 #include <packagekit-glib2/packagekit.h>
 #include <vector>
@@ -23,7 +24,7 @@ namespace PackageKitMM{
         TASK_REMOVE_PACKAGE,
         TASK_REFRESH_CACHE
     };
-    typedef void (*ProgressCallback)(int progress,TaskType type);
+    typedef void (*ProgressCallback)(PkProgress progress,TaskType type);
     class PackageKit {
     public:
         PackageKit();
@@ -60,7 +61,7 @@ namespace PackageKitMM{
         std::string m_error;
 
         //内部调用
-        void (*_progressCallback)(PkProgress *progress,PkProgressType type,gpointer user_data){};
+        void (*_progressCallback)(_PkProgress *progress,PkProgressType type,gpointer user_data){};
         static gchar** to_package_id_list(std::vector<PkPackage> packages);
 
 #ifdef _APT

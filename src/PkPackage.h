@@ -9,10 +9,12 @@
 #include <vector>
 namespace PackageKitMM {
     class PackageKit;
+    class PkProgress;
     //该类描述一个软件包
     class PkPackage {
-    public:
         friend PackageKit;
+        friend PkProgress;
+    public:
         PkPackage();
         PkPackage(_PkPackage pkPackage);
         //API
