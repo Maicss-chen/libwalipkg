@@ -1,11 +1,11 @@
 #include <iostream>
 #include <cstring>
 
-#include "../src/PackageKit.h"
+#include "../src/WaliPkgCmd.h"
 #include "../src/log.h"
 int main() {
 
-    PackageKitMM::PackageKit p;
+    WaliPkgCmd p;
 
     std::vector<std::string> v;
     v.emplace_back("zip");
@@ -22,15 +22,15 @@ int main() {
 
     return 0;
     //设置进度更新时的回调函数
-    p.setProgressCallback([](PackageKitMM::PkProgress progress, PackageKitMM::TaskType type){
+    p.setProgressCallback([](WaliSchedule progress, TaskType type){
         std::string str;
-        if(type == PackageKitMM::TASK_FIND_PACKAGE)
+        if(type == TASK_FIND_PACKAGE)
             str = "查找进度：";
-        else if(type == PackageKitMM::TASK_INSTALL_PACKAGE)
+        else if(type == TASK_INSTALL_PACKAGE)
             str = "安装进度：";
-        else if(type == PackageKitMM::TASK_REMOVE_PACKAGE)
+        else if(type == TASK_REMOVE_PACKAGE)
             str = "卸载进度：";
-        else if(type == PackageKitMM::TASK_REFRESH_CACHE)
+        else if(type == TASK_REFRESH_CACHE)
             str = "更新缓存：";
         std::cout<<"\r"<<str<<progress.get_percentage()<<"% speed:"<<progress.get_speed()<<"Mb/s"<<std::flush;
         ;
@@ -59,7 +59,7 @@ int main() {
     auto pkg_list = p.find_packages_based_on_names(values);
 
     //筛选
-    std::vector<PackageKitMM::PkPackage> install_list;
+    std::vector<WaliPkg> install_list;
     for(auto pkg : pkg_list){
         //将架构为x86_64的未安装的软件包加入安装列表
         if(std::strcmp(pkg.get_package_arch().c_str(),"amd64") == 0 && !pkg.is_installed()){

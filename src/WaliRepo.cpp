@@ -2,24 +2,24 @@
 // Created by maicss on 2022/1/14.
 //
 
-#include "PkRepo.h"
+#include "WaliRepo.h"
 #include "log.h"
 
 #include <string>
 
-std::string PackageKitMM::PkRepo::get_repo_id() {
+std::string WaliRepo::get_repo_id() {
     return pk_repo_detail_get_id(&m_repo);
 }
 
-std::string PackageKitMM::PkRepo::get_repo_description() {
+std::string WaliRepo::get_repo_description() {
     return pk_repo_detail_get_description(&m_repo);
 }
 
-bool PackageKitMM::PkRepo::get_repo_enabled() {
+bool WaliRepo::get_repo_enabled() {
     return pk_repo_detail_get_enabled(&m_repo);
 }
 
-void PackageKitMM::PkRepo::set_repo_enabled(bool enable) {
+void WaliRepo::set_repo_enabled(bool enable) {
     PkTask *pkTask = pk_task_new();
     GError *error;
     gchar *id = g_strdup(pk_repo_detail_get_id(&m_repo));

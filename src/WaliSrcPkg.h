@@ -2,15 +2,14 @@
 // Created by maicss on 2022/1/19.
 //
 
-#ifndef PACKAGEKITMM_PKSOURCEPACKAGE_H
-#define PACKAGEKITMM_PKSOURCEPACKAGE_H
+#ifndef PACKAGEKITMM_WALISRCPKG_H
+#define PACKAGEKITMM_WALISRCPKG_H
 
 #include "string"
 #include "vector"
-namespace PackageKitMM {
-    class PackageKit;
-    class PkSourcePackage {
-        friend PackageKit;
+    class WaliPkgCmd;
+    class WaliSrcPkg {
+        friend WaliPkgCmd;
     public:
         std::string get_name();
         std::string get_version();
@@ -20,6 +19,5 @@ namespace PackageKitMM {
         std::string m_version;
         std::vector<std::string> m_package_list;
     };
-}
 
-#endif //PACKAGEKITMM_PKSOURCEPACKAGE_H
+#endif //PACKAGEKITMM_WALISRCPKG_H

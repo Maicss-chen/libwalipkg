@@ -2,40 +2,48 @@
 // Created by maicss on 2021/12/28.
 //
 
-#include "PackageKit.h"
+#include "WaliPkgCmd.h"
 #include <iostream>
 #include <fstream>
-#include <filesystem>
+#if __GNUC__ <= 5
+    #error your compiler cannot support C++17 standard. we need at least GCC 7
+#elif (__GNUC__ > 5) && (__GNUC__ < 11)
+    #include <experimental/filesystem>
+#else
+    #include <filesystem>
+#endif
 
 #include "log.h"
 
 using namespace std;
-using namespace PackageKitMM;
-PackageKitMM::PackageKit::PackageKit() {
-    log("Create a PackageKit object");
+#if (__GNUC__ > 6) && (__GNUC__ < 11)
+    namespace filesystem = experimental::filesystem;
+#endif
+WaliPkgCmd::WaliPkgCmd() {
+    log("Create a WaliPkgCmd object");
     init();
 }
-PackageKitMM::PackageKit::~PackageKit() {
+WaliPkgCmd::~WaliPkgCmd() {
     g_object_unref (m_task);
 }
 
-bool PackageKitMM::PackageKit::init() {
+bool WaliPkgCmd::init() {
     m_task = pk_task_new();
     _progressCallback = [](_PkProgress *progress, PkProgressType type, gpointer user_data) {
         if(user_data != nullptr) {
-            PkProgress progress1{};
+            WaliSchedule progress1{};
             progress1.m_progress = *progress;
-            ((PackageKit *) user_data)->m_progressCallback(progress1,((PackageKit *) user_data)->m_tasktype);
+            ((WaliPkgCmd *) user_data)->m_progressCallback(progress1, ((WaliPkgCmd *) user_data)->m_tasktype);
         }
     };
     return m_task != nullptr;
 }
-std::vector<PackageKitMM::PkPackage>
-PackageKitMM::PackageKit::find_packages_based_on_files(std::vector<std::string> files) {
+std::vector<WaliPkg>
+WaliPkgCmd::find_packages_based_on_files(std::vector<std::string> files) {
     m_error = "";
 #ifdef _APT
     m_tasktype = TASK_FIND_PACKAGE;
-    std::vector<PackageKitMM::PkPackage> res;
+    std::vector<WaliPkg> res;
     std::vector<string> contents;
     filesystem::path cacheDir("/var/lib/apt/lists/");
 
@@ -45,7 +53,7 @@ PackageKitMM::PackageKit::find_packages_based_on_files(std::vector<std::string> 
     }
 
     filesystem::directory_entry entry(cacheDir);
-    if(!entry.exists()){
+    if(!filesystem::exists(entry.path())){
         m_error = log("Can't find "+cacheDir.string());
         return res;
     }
@@ -87,7 +95,7 @@ PackageKitMM::PackageKit::find_packages_based_on_files(std::vector<std::string> 
 #else
     gchar **values;
     GPtrArray *array = nullptr;
-    PkPackage *item;
+    WaliPkg *item;
     gchar **package_ids = nullptr;
     PkResults *results = nullptr;
     GError *error = nullptr;
@@ -105,9 +113,9 @@ PackageKitMM::PackageKit::find_packages_based_on_files(std::vector<std::string> 
     }
     array = pk_results_get_package_array (results);
     package_ids = g_new0 (gchar *, array->len+1);
-    std::vector<PkPackage> res;
+    std::vector<WaliPkg> res;
     for (int i = 0; i < array->len; i++) {
-        item = (PkPackage*)g_ptr_array_index(array, i);
+        item = (WaliPkg*)g_ptr_array_index(array, i);
         package_ids[i] = g_strdup (pk_package_get_id ((_PkPackage*)item));
         res.emplace_back(*item);
     }
@@ -119,17 +127,17 @@ PackageKitMM::PackageKit::find_packages_based_on_files(std::vector<std::string> 
 }
 
 
-std::vector<PackageKitMM::PkPackage>
-PackageKitMM::PackageKit::find_packages_based_on_names(std::vector<std::string> names) {
+std::vector<WaliPkg>
+WaliPkgCmd::find_packages_based_on_names(std::vector<std::string> names) {
     m_error = "";
     m_tasktype = TASK_FIND_PACKAGE;
     gchar **values;
     GPtrArray *array = nullptr;
-    PkPackage *item;
+    WaliPkg *item;
     gchar **package_ids = nullptr;
     PkResults *results = nullptr;
     GError *error = nullptr;
-    std::vector<PkPackage> res;
+    std::vector<WaliPkg> res;
     if (names.empty()){
         m_error = log(LOG_FUNCTION_NAME "Names is empty!", WARRING);
         return res;
@@ -148,7 +156,7 @@ PackageKitMM::PackageKit::find_packages_based_on_names(std::vector<std::string> 
     array = pk_results_get_package_array (results);
     package_ids = g_new0 (gchar *, array->len+1);
     for (int i = 0; i < array->len; i++) {
-        item = (PkPackage*)g_ptr_array_index(array, i);
+        item = (WaliPkg*)g_ptr_array_index(array, i);
         package_ids[i] = g_strdup (pk_package_get_id ((_PkPackage*)item));
         res.emplace_back(*item);
     }
@@ -158,7 +166,7 @@ PackageKitMM::PackageKit::find_packages_based_on_names(std::vector<std::string> 
     return res;
 }
 
-void PackageKitMM::PackageKit::install_packages(std::vector<PkPackage> packages) {
+void WaliPkgCmd::install_packages(std::vector<WaliPkg> packages) {
     m_error = "";
     gchar **package_ids = to_package_id_list(std::move(packages));
     GError *error = nullptr;
@@ -172,11 +180,11 @@ void PackageKitMM::PackageKit::install_packages(std::vector<PkPackage> packages)
     m_tasktype = TASK_NOTING_TO_DO;
 }
 
-void PackageKitMM::PackageKit::setProgressCallback(ProgressCallback progressCallback) {
+void WaliPkgCmd::setProgressCallback(ScheduleCallback progressCallback) {
     m_progressCallback = progressCallback;
 }
 
-void PackageKitMM::PackageKit::remove_packages(std::vector<PkPackage> packages, bool allow_deps, bool autoremove) {
+void WaliPkgCmd::remove_packages(std::vector<WaliPkg> packages, bool allow_deps, bool autoremove) {
     m_error = "";
     gchar **package_ids = to_package_id_list(std::move(packages));
     GError *error = nullptr;
@@ -190,7 +198,7 @@ void PackageKitMM::PackageKit::remove_packages(std::vector<PkPackage> packages, 
     m_tasktype = TASK_NOTING_TO_DO;
 }
 
-gchar **PackageKitMM::PackageKit::to_package_id_list(std::vector<PkPackage> packages) {
+gchar **WaliPkgCmd::to_package_id_list(std::vector<WaliPkg> packages) {
     gchar **package_ids = nullptr;
     package_ids = g_new0 (gchar *, packages.size()+1);
 
@@ -201,7 +209,7 @@ gchar **PackageKitMM::PackageKit::to_package_id_list(std::vector<PkPackage> pack
     return package_ids;
 }
 
-void PackageKitMM::PackageKit::refresh_cache(bool force) {
+void WaliPkgCmd::refresh_cache(bool force) {
     m_error = "";
     m_tasktype = TASK_REFRESH_CACHE;
     GError *error = nullptr;
@@ -213,7 +221,7 @@ void PackageKitMM::PackageKit::refresh_cache(bool force) {
     m_tasktype = TASK_NOTING_TO_DO;
 }
 
-void PackageKit::install_local_packages(std::vector<std::string> files) {
+void WaliPkgCmd::install_local_packages(std::vector<std::string> files) {
     m_error = "";
     m_tasktype = TASK_INSTALL_PACKAGE;
     GError *error = nullptr;
@@ -234,29 +242,29 @@ void PackageKit::install_local_packages(std::vector<std::string> files) {
     m_tasktype = TASK_NOTING_TO_DO;
 }
 
-std::string PackageKit::error() {
+std::string WaliPkgCmd::error() {
     return m_error;
 }
 
-std::vector<PkRepo> PackageKit::get_repo_list() {
-    vector<PkRepo> res;
+std::vector<WaliRepo> WaliPkgCmd::get_repo_list() {
+    vector<WaliRepo> res;
     GError *error = nullptr;
     auto _res = pk_task_get_repo_list_sync(m_task, PK_FILTER_ENUM_NONE, nullptr, nullptr, nullptr,&error);
     auto array = pk_results_get_repo_detail_array (_res);
     for (int i = 0; i < array->len; i++) {
-        PkRepo repo{};
+        WaliRepo repo{};
         repo.m_repo = *(_PkRepoDetail*)g_ptr_array_index(array, i);
         res.emplace_back(repo);
     }
     return res;
 }
 #ifdef _APT
-std::vector<PkSourcePackage> PackageKit::get_source_package_info(std::vector<std::string> packages) {
-    vector<PkSourcePackage> res;
+std::vector<WaliSrcPkg> WaliPkgCmd::get_source_package_info(std::vector<std::string> packages) {
+    vector<WaliSrcPkg> res;
     std::vector<string> sources;
     filesystem::path cacheDir("/var/lib/apt/lists/");
     filesystem::directory_entry entry(cacheDir);
-    if(!entry.exists()){
+    if(!filesystem::exists(entry.path())){
         m_error = log("Can't find "+cacheDir.string());
         return res;
     }
@@ -283,7 +291,7 @@ std::vector<PkSourcePackage> PackageKit::get_source_package_info(std::vector<std
             continue;
         }
         string line;
-        PkSourcePackage sourcesEntry;
+        WaliSrcPkg sourcesEntry;
         bool thisOne = false;
         bool readPackageList = false;
         while (getline(file, line))
@@ -327,8 +335,8 @@ std::vector<PkSourcePackage> PackageKit::get_source_package_info(std::vector<std
 #endif
 
 #ifdef _APT
-std::vector<PackageKitMM::ContentsEntry>
-PackageKitMM::PackageKit::parse_contents(const std::string &filename, std::vector<std::string> targets) {
+std::vector<ContentsEntry>
+WaliPkgCmd::parse_contents(const std::string &filename, std::vector<std::string> targets) {
 
     fstream file;
     vector<ContentsEntry> res;
